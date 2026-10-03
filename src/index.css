@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  font-family: 'Alice', sans-serif;
+  --color-primary: #0ea5e9;
+  --color-secondary: #0f172a;
+  --color-accent: #f59e0b;
+}
