@@ -50,11 +50,18 @@ interface SiteContextValue {
   refresh: () => Promise<void>;
 }
 
+const DEFAULT_NAV_LINKS: NavLink[] = [
+  { id: 'home', label: 'Home', url: '/', link_order: 1, is_active: true, is_external: false, created_at: '' },
+  { id: 'services', label: 'Services', url: '/#services', link_order: 2, is_active: true, is_external: false, created_at: '' },
+  { id: 'about', label: 'About Us', url: '/#about', link_order: 3, is_active: true, is_external: false, created_at: '' },
+  { id: 'contact', label: 'Contact', url: '/#contact', link_order: 4, is_active: true, is_external: false, created_at: '' },
+];
+
 const SiteContext = createContext<SiteContextValue | undefined>(undefined);
 
 export function SiteProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
-  const [navLinks, setNavLinks] = useState<NavLink[]>([]);
+  const [navLinks, setNavLinks] = useState<NavLink[]>(DEFAULT_NAV_LINKS);
   const [footerLinks, setFooterLinks] = useState<FooterLink[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -72,7 +79,11 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       ]);
 
       if (settingsRes.data) setSettings(settingsRes.data as SiteSettings);
-      if (navRes.data) setNavLinks(navRes.data as NavLink[]);
+      if (navRes.data && navRes.data.length > 0) {
+        setNavLinks(navRes.data as NavLink[]);
+      } else {
+        setNavLinks(DEFAULT_NAV_LINKS);
+      }
       if (footerRes.data) setFooterLinks(footerRes.data as FooterLink[]);
     } catch (error) {
       console.warn('[v0] Site content is unavailable; using built-in defaults.', error);
