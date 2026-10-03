@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, ArrowLeft, Loader2, User, MapPin, Package, Truck } from 'lucide-react';
+import { Save, ArrowLeft, Loader2, User, MapPin, Package } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { DeliveryStatus } from '@/types';
 import { useSite } from '@/context/SiteContext';

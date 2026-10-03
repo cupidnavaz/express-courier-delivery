@@ -59,16 +59,21 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    const [settingsRes, navRes, footerRes] = await Promise.all([
-      supabase.from('site_settings').select('*').limit(1).maybeSingle(),
-      supabase.from('nav_links').select('*').order('link_order', { ascending: true }),
-      supabase.from('footer_links').select('*').order('link_order', { ascending: true }),
-    ]);
+    try {
+      const [settingsRes, navRes, footerRes] = await Promise.all([
+        supabase.from('site_settings').select('*').limit(1).maybeSingle(),
+        supabase.from('nav_links').select('*').order('link_order', { ascending: true }),
+        supabase.from('footer_links').select('*').order('link_order', { ascending: true }),
+      ]);
 
-    if (settingsRes.data) setSettings(settingsRes.data as SiteSettings);
-    if (navRes.data) setNavLinks(navRes.data as NavLink[]);
-    if (footerRes.data) setFooterLinks(footerRes.data as FooterLink[]);
-    setLoading(false);
+      if (settingsRes.data) setSettings(settingsRes.data as SiteSettings);
+      if (navRes.data) setNavLinks(navRes.data as NavLink[]);
+      if (footerRes.data) setFooterLinks(footerRes.data as FooterLink[]);
+    } catch (error) {
+      console.warn('[v0] Site content is unavailable; using built-in defaults.', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {

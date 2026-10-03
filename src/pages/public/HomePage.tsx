@@ -4,12 +4,12 @@ import {
   Truck, Globe, Shield, Package, MapPin, Headphones, Search,
   ArrowRight, CheckCircle2, Star, Clock, Zap, Send, Loader2, MessageSquare,
   Phone, Mail,
+  type LucideIcon,
 } from 'lucide-react';
 import { useSite } from '@/context/SiteContext';
 import { supabase } from '@/lib/supabase';
-import { WhyChooseItem } from '@/types';
 
-const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+const ICON_MAP: Record<string, LucideIcon> = {
   Truck, Globe, Shield, Package, MapPin, Headphones, Clock, Star, Zap, Send, CheckCircle2, MessageSquare,
 };
 
