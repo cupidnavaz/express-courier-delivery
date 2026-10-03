@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { SiteSettings, NavLink, FooterLink } from '@/types';
 
 const GOOGLE_FONTS: Record<string, string> = {
@@ -59,6 +59,11 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const [settingsRes, navRes, footerRes] = await Promise.all([
         supabase.from('site_settings').select('*').limit(1).maybeSingle(),
