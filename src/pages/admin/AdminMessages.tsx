@@ -108,7 +108,7 @@ export default function AdminMessages() {
       return;
     }
 
-    const messageRowId = (msgData as any).id;
+    const messageRowId = msgData?.id;
 
     if (compose.channel === 'email') {
       // Send via edge function with branded sender name

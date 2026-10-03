@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Search, Package, MapPin, Clock, CheckCircle2, AlertCircle,
-  Truck, PackageCheck, Loader2, XCircle,
+  Truck, PackageCheck, Loader2,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Invoice, InvoiceStatusHistory, DeliveryStatus, STATUS_LABELS, STATUS_COLORS } from '@/types';
@@ -71,7 +71,6 @@ export default function TrackPage() {
       setInput(code);
       doSearch(code);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const handleSubmit = (e: React.FormEvent) => {

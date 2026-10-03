@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, Package, CheckCircle2, Clock, TrendingUp, Plus, Truck, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { DeliveryStatus, STATUS_LABELS, STATUS_COLORS } from '@/types';
+import { Invoice, DeliveryStatus, STATUS_LABELS, STATUS_COLORS } from '@/types';
 import { useSite } from '@/context/SiteContext';
 
 interface DashboardStats {
@@ -17,7 +17,7 @@ interface DashboardStats {
 export default function DashboardOverview() {
   const { settings } = useSite();
   const [stats, setStats] = useState<DashboardStats>({ total: 0, processing: 0, dispatched: 0, in_transit: 0, delivered: 0, on_hold: 0 });
-  const [recent, setRecent] = useState<any[]>([]);
+  const [recent, setRecent] = useState<Invoice[]>([]);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [loading, setLoading] = useState(true);
 

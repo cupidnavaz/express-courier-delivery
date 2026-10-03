@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Plus, FileText, Eye, Trash2, Loader2, Filter, Edit3 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { Invoice, DeliveryStatus, STATUS_LABELS, STATUS_COLORS, STATUS_ORDER } from '@/types';
+import { Invoice, STATUS_LABELS, STATUS_COLORS, STATUS_ORDER } from '@/types';
 import { useSite } from '@/context/SiteContext';
 
 export default function InvoiceList() {
