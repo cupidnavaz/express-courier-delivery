@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Download, Share2, Mail, Loader2, Package, Truck,
-  CheckCircle2, Clock, AlertCircle, MapPin, User, Calendar,
-  Plus, History, Printer, Trash2, Edit3, Save, X,
+  CheckCircle2, Clock, AlertCircle, MapPin, User,
+  Plus, History, Printer, Edit3, Save, X,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import {
@@ -49,14 +49,6 @@ export default function InvoiceDetail() {
       return new Date(dateStr).toLocaleDateString('en-US', { timeZone: tz });
     } catch {
       return new Date(dateStr).toLocaleDateString();
-    }
-  };
-
-  const formatDateTime = (dateStr: string) => {
-    try {
-      return new Date(dateStr).toLocaleString('en-US', { timeZone: tz });
-    } catch {
-      return new Date(dateStr).toLocaleString();
     }
   };
 
@@ -255,7 +247,10 @@ export default function InvoiceDetail() {
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Track your package', url });
-      } catch {}
+      } catch {
+        setEmailStatus('Sharing was cancelled.');
+        setTimeout(() => setEmailStatus(''), 3000);
+      }
     } else {
       await navigator.clipboard.writeText(url);
       setEmailStatus('Tracking link copied to clipboard!');
@@ -283,24 +278,6 @@ export default function InvoiceDetail() {
 
   const handlePrint = () => {
     window.print();
-  };
-
-  const handleDeleteHistory = async (historyId: string) => {
-    if (!invoice || !confirm('Delete this status update from the history?')) return;
-    await supabase.from('invoice_status_history').delete().eq('id', historyId);
-    const { data: histData } = await supabase
-      .from('invoice_status_history')
-      .select('*')
-      .eq('invoice_id', id)
-      .order('created_at', { ascending: true });
-    setHistory((histData as InvoiceStatusHistory[]) || []);
-  };
-
-  const handleEditHistory = (item: InvoiceStatusHistory) => {
-    setEditingHistory(item);
-    setEditHistoryStatus(item.status);
-    setEditHistoryNote(item.notes || '');
-    setEditHistoryLocation(item.location || '');
   };
 
   const handleSaveHistory = async () => {

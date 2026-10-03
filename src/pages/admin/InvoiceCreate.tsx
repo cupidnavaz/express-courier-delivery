@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, ArrowLeft, Loader2, User, MapPin, Package, Truck } from 'lucide-react';
+import { Save, ArrowLeft, Loader2, User, MapPin, Package } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { DeliveryStatus } from '@/types';
 import { useSite } from '@/context/SiteContext';
@@ -90,13 +90,13 @@ export default function InvoiceCreate() {
 
     // Create initial status history entry
     await supabase.from('invoice_status_history').insert({
-      invoice_id: (data as any).id,
+      invoice_id: data.id,
       status: 'processing',
       notes: 'Invoice created and order received.',
       location: settings?.address || 'Origin Facility',
     });
 
-    navigate(`/admin/invoices/${(data as any).id}`);
+    navigate(`/admin/invoices/${data.id}`);
   };
 
   const inputClass = 'w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400';

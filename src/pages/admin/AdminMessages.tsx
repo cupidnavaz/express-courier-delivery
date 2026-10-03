@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import {
-  Message, MessageChannel, MessageStatus,
+  Message, MessageChannel,
   MESSAGE_STATUS_LABELS, MESSAGE_STATUS_COLORS,
 } from '@/types';
 import { useSite } from '@/context/SiteContext';
@@ -108,7 +108,7 @@ export default function AdminMessages() {
       return;
     }
 
-    const messageRowId = (msgData as any).id;
+    const messageRowId = msgData?.id;
 
     if (compose.channel === 'email') {
       // Send via edge function with branded sender name

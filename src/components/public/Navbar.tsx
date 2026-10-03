@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Package, ChevronDown } from 'lucide-react';
+import { Menu, X, Package } from 'lucide-react';
 import { useState } from 'react';
 import { useSite } from '@/context/SiteContext';
 
