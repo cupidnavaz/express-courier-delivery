@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, Settings, FileText, FilePlus2,
+  LayoutDashboard, Settings, FileText, FilePlus2, Truck,
   LogOut, Package, Menu, X, ExternalLink, MessageSquare,
 } from 'lucide-react';
 import { useState } from 'react';

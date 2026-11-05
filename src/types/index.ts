@@ -37,6 +37,7 @@ export interface SiteSettings {
   contact_title: string;
   contact_subtitle: string;
   contact_info_text: string;
+  contact_image_url: string | null;
   hero_badge_text: string;
   about_features_json: string[];
   services_json: ServiceItem[];
@@ -52,6 +53,7 @@ export interface ServiceItem {
   icon: string;
   title: string;
   description: string;
+  image_url?: string | null;
 }
 
 export interface StatItem {

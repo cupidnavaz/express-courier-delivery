@@ -8,3 +8,9 @@ html {
   --color-secondary: #0f172a;
   --color-accent: #f59e0b;
 }
+
+.tracking-code {
+  font-family: 'Alice', 'Georgia', serif;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}

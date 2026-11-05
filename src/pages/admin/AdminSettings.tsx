@@ -17,6 +17,7 @@ export default function AdminSettings() {
   const [logoMode, setLogoMode] = useState<'upload' | 'url'>('upload');
   const [heroMode, setHeroMode] = useState<'upload' | 'url'>('upload');
   const [aboutImgMode, setAboutImgMode] = useState<'upload' | 'url'>('upload');
+  const [contactImgMode, setContactImgMode] = useState<'upload' | 'url'>('upload');
 
   useEffect(() => {
     if (settings) {
@@ -61,14 +62,15 @@ export default function AdminSettings() {
       services_subtitle: form.services_subtitle,
       why_choose_title: form.why_choose_title,
       why_choose_subtitle: form.why_choose_subtitle,
-      why_choose_json: whyChoose,
+      why_choose_json: whyChoose as any,
       contact_title: form.contact_title,
       contact_subtitle: form.contact_subtitle,
       contact_info_text: form.contact_info_text,
+      contact_image_url: form.contact_image_url,
       hero_badge_text: form.hero_badge_text,
-      about_features_json: aboutFeatures,
-      services_json: services,
-      stats_json: stats,
+      about_features_json: aboutFeatures as any,
+      services_json: services as any,
+      stats_json: stats as any,
       footer_text: form.footer_text,
       font_family: form.font_family,
       timezone: form.timezone,
@@ -88,7 +90,7 @@ export default function AdminSettings() {
   const updateService = (idx: number, key: keyof ServiceItem, value: string) => {
     setServices(services.map((s, i) => i === idx ? { ...s, [key]: value } : s));
   };
-  const addService = () => setServices([...services, { icon: 'Package', title: 'New Service', description: 'Description here' }]);
+  const addService = () => setServices([...services, { icon: 'Package', title: 'New Service', description: 'Description here', image_url: null }]);
   const removeService = (idx: number) => setServices(services.filter((_, i) => i !== idx));
 
   const updateStat = (idx: number, key: keyof StatItem, value: string) => {
@@ -338,6 +340,10 @@ export default function AdminSettings() {
                     <label className="text-xs text-slate-500">Description</label>
                     <input className={inputClass} value={service.description} onChange={(e) => updateService(idx, 'description', e.target.value)} />
                   </div>
+                  <div className="sm:col-span-3">
+                    <label className="text-xs text-slate-500 mb-1 block">Service Image (optional)</label>
+                    <FileUpload value={service.image_url || null} onChange={(url) => updateService(idx, 'image_url', url)} folder="services" />
+                  </div>
                 </div>
               </div>
             ))}
@@ -398,7 +404,7 @@ export default function AdminSettings() {
         {/* Contact Section */}
         <div className={sectionClass}>
           <h2 className={headingClass}>Contact Section</h2>
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-2 gap-4 mb-4">
             <div className="sm:col-span-2">
               <label className={labelClass}>Contact Info Text</label>
               <textarea className={inputClass} rows={2} value={form.contact_info_text || ''} onChange={(e) => update('contact_info_text', e.target.value)} />
@@ -411,6 +417,23 @@ export default function AdminSettings() {
             <div>
               <label className={labelClass}>Section Subtitle</label>
               <input className={inputClass} value={form.contact_subtitle || ''} onChange={(e) => update('contact_subtitle', e.target.value)} />
+            </div>
+            <div className="sm:col-span-2">
+              <label className={labelClass}>Contact Image</label>
+              <div className="flex gap-2 mb-3">
+                <button type="button" onClick={() => setContactImgMode('upload')} className={`px-3 py-1.5 text-sm font-medium rounded-lg flex items-center gap-1.5 ${contactImgMode === 'upload' ? 'bg-sky-50 text-sky-600' : 'text-slate-500 hover:bg-slate-100'}`}>
+                  <Upload className="w-3.5 h-3.5" /> Upload
+                </button>
+                <button type="button" onClick={() => setContactImgMode('url')} className={`px-3 py-1.5 text-sm font-medium rounded-lg flex items-center gap-1.5 ${contactImgMode === 'url' ? 'bg-sky-50 text-sky-600' : 'text-slate-500 hover:bg-slate-100'}`}>
+                  <Link2 className="w-3.5 h-3.5" /> URL
+                </button>
+              </div>
+              {contactImgMode === 'upload' ? (
+                <FileUpload value={form.contact_image_url || null} onChange={(url) => update('contact_image_url', url)} folder="contact" />
+              ) : (
+                <input className={inputClass} value={form.contact_image_url || ''} onChange={(e) => update('contact_image_url', e.target.value)} placeholder="https://..." />
+              )}
+              <p className="text-xs text-slate-400 mt-1">Shown above the contact info card on the homepage.</p>
             </div>
           </div>
         </div>

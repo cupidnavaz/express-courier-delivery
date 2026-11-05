@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Plus, FileText, Eye, Trash2, Loader2, Filter, Edit3 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { Invoice, STATUS_LABELS, STATUS_COLORS, STATUS_ORDER } from '@/types';
+import { Invoice, DeliveryStatus, STATUS_LABELS, STATUS_COLORS, STATUS_ORDER } from '@/types';
 import { useSite } from '@/context/SiteContext';
 
 export default function InvoiceList() {
@@ -107,7 +107,7 @@ export default function InvoiceList() {
               <tbody className="divide-y divide-slate-100">
                 {filtered.map((inv) => (
                   <tr key={inv.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 font-mono font-medium text-slate-900">{inv.tracking_code}</td>
+                    <td className="px-4 py-3 tracking-code font-medium text-slate-900">{inv.tracking_code}</td>
                     <td className="px-4 py-3 text-slate-600">{inv.sender_name}</td>
                     <td className="px-4 py-3 text-slate-600">{inv.receiver_name}</td>
                     <td className="px-4 py-3">

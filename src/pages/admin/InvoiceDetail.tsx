@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Download, Share2, Mail, Loader2, Package, Truck,
-  CheckCircle2, Clock, AlertCircle, MapPin, User,
-  Plus, History, Printer, Edit3, Save, X,
+  CheckCircle2, Clock, AlertCircle, MapPin, User, Calendar,
+  Plus, History, Printer, Trash2, Edit3, Save, X, Phone, FileText,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import {
@@ -45,11 +45,13 @@ export default function InvoiceDetail() {
   const tz = settings?.timezone || 'UTC';
 
   const formatDate = (dateStr: string) => {
-    try {
-      return new Date(dateStr).toLocaleDateString('en-US', { timeZone: tz });
-    } catch {
-      return new Date(dateStr).toLocaleDateString();
-    }
+    try { return new Date(dateStr).toLocaleDateString('en-US', { timeZone: tz }); }
+    catch { return new Date(dateStr).toLocaleDateString(); }
+  };
+
+  const formatDateTime = (dateStr: string) => {
+    try { return new Date(dateStr).toLocaleString('en-US', { timeZone: tz }); }
+    catch { return new Date(dateStr).toLocaleString(); }
   };
 
   useEffect(() => {
@@ -73,6 +75,15 @@ export default function InvoiceDetail() {
     })();
   }, [id]);
 
+  const refreshHistory = async () => {
+    const { data: histData } = await supabase
+      .from('invoice_status_history')
+      .select('*')
+      .eq('invoice_id', id)
+      .order('created_at', { ascending: true });
+    setHistory((histData as InvoiceStatusHistory[]) || []);
+  };
+
   const handleAddStatus = async () => {
     if (!invoice) return;
     setSavingStatus(true);
@@ -83,15 +94,8 @@ export default function InvoiceDetail() {
       location: statusLocation || null,
     });
     await supabase.from('invoices').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', invoice.id);
-
     setInvoice({ ...invoice, status: newStatus });
-    const { data: histData } = await supabase
-      .from('invoice_status_history')
-      .select('*')
-      .eq('invoice_id', id)
-      .order('created_at', { ascending: true });
-    setHistory((histData as InvoiceStatusHistory[]) || []);
-
+    await refreshHistory();
     setShowStatusModal(false);
     setStatusNote('');
     setStatusLocation('');
@@ -100,131 +104,137 @@ export default function InvoiceDetail() {
 
   const handleDownloadPDF = async () => {
     if (!invoice || !qrDataUrl) return;
-
     const { default: jsPDF } = await import('jspdf');
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
 
     // Header bar
-    doc.setFillColor(14, 165, 233);
-    doc.rect(0, 0, pageWidth, 30, 'F');
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, pageWidth, 35, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(18);
+    doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.text(settings?.company_name || 'Express Courier Services', 14, 13);
-    doc.setFontSize(10);
+    doc.text(settings?.company_name || 'Express Courier Services', 14, 14);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.text(settings?.tagline || '', 14, 20);
     doc.text(settings?.phone || '', 14, 26);
 
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.text('DELIVERY INVOICE', pageWidth - 14, 18, { align: 'right' });
+    // Logo if available
+    if (settings?.logo_url) {
+      try {
+        const resp = await fetch(settings.logo_url);
+        const blob = await resp.blob();
+        const reader = new FileReader();
+        const dataUrl = await new Promise<string>((resolve) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+        const fmt = blob.type.includes('png') ? 'PNG' : 'JPEG';
+        doc.addImage(dataUrl, fmt, pageWidth - 44, 6, 28, 22);
+      } catch {}
+    }
 
-    // Tracking code box
-    doc.setFillColor(241, 245, 249);
-    doc.rect(14, 38, pageWidth - 28, 20, 'F');
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(15, 23, 42);
-    doc.setFontSize(9);
+    doc.text('DELIVERY INVOICE', pageWidth - 14, 44, { align: 'right' });
+
+    let y = 56;
+
+    // Tracking code + date row
+    doc.setFillColor(241, 245, 249);
+    doc.roundedRect(14, y, pageWidth - 28, 22, 2, 2, 'F');
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.text('TRACKING CODE', 20, 45);
-    doc.setFontSize(14);
+    doc.text('TRACKING CODE', 20, y + 7);
+    doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
-    doc.text(invoice.tracking_code, 20, 53);
-
-    // QR code
-    doc.addImage(qrDataUrl, 'PNG', pageWidth - 44, 38, 26, 26);
-
-    let y = 70;
-
-    // Status
-    doc.setFontSize(9);
+    doc.setTextColor(15, 23, 42);
+    doc.text(invoice.tracking_code, 20, y + 16);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(100, 116, 139);
-    doc.text('Status:', 14, y);
-    doc.setTextColor(15, 23, 42);
-    doc.setFont('helvetica', 'bold');
-    doc.text(STATUS_LABELS[invoice.status].toUpperCase(), 35, y);
-    y += 10;
-
-    // Sender / Receiver
-    doc.setDrawColor(226, 232, 240);
-    doc.setLineWidth(0.5);
-
+    doc.text('DATE', pageWidth - 70, y + 7);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(15, 23, 42);
+    doc.text(formatDate(invoice.created_at), pageWidth - 70, y + 16);
+    doc.addImage(qrDataUrl, 'PNG', pageWidth - 40, y - 2, 24, 24);
+
+    y += 32;
+
+    // Sender / Receiver side by side
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 8;
+
+    const colWidth = (pageWidth - 28) / 2;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(15, 23, 42);
     doc.text('FROM (SENDER)', 14, y);
-    doc.text('TO (RECEIVER)', pageWidth / 2 + 7, y);
+    doc.text('TO (RECEIVER)', 14 + colWidth, y);
     y += 6;
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(71, 85, 105);
-    const senderLines = [
-      invoice.sender_name,
-      invoice.sender_phone,
-      invoice.sender_email || '',
-      invoice.sender_address,
-    ].filter(Boolean);
-    const receiverLines = [
-      invoice.receiver_name,
-      invoice.receiver_phone,
-      invoice.receiver_email || '',
-      invoice.receiver_address,
-    ].filter(Boolean);
+    const senderLines = [invoice.sender_name, invoice.sender_phone, invoice.sender_email || '', invoice.sender_address].filter(Boolean);
+    const receiverLines = [invoice.receiver_name, invoice.receiver_phone, invoice.receiver_email || '', invoice.receiver_address].filter(Boolean);
+    const maxLines = Math.max(senderLines.length, receiverLines.length);
+    for (let i = 0; i < maxLines; i++) {
+      if (senderLines[i]) doc.text(senderLines[i], 14, y + i * 5);
+      if (receiverLines[i]) doc.text(receiverLines[i], 14 + colWidth, y + i * 5);
+    }
+    y += maxLines * 5 + 8;
+    doc.line(14, y, pageWidth - 14, y);
+    y += 8;
 
-    senderLines.forEach((line) => { doc.text(line, 14, y); y += 5; });
-    let yRight = y - senderLines.length * 5;
-    receiverLines.forEach((line) => { doc.text(line, pageWidth / 2 + 7, yRight); yRight += 5; });
-
-    y = Math.max(y, yRight) + 8;
-    doc.line(14, y - 4, pageWidth - 14, y - 4);
-
-    // Package details
+    // Package details table
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setTextColor(15, 23, 42);
     doc.text('PACKAGE DETAILS', 14, y);
-    y += 8;
+    y += 6;
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.setTextColor(71, 85, 105);
-    const packageLines: [string, string][] = [
+    const pkgRows: [string, string][] = [
       ['Description', invoice.package_description],
       ['Type', invoice.package_type || 'N/A'],
       ['Weight', invoice.package_weight ? `${invoice.package_weight} kg` : 'N/A'],
       ['Dimensions', invoice.package_dimensions || 'N/A'],
       ['Shipping Method', invoice.shipping_method],
-      ['Estimated Delivery', invoice.estimated_delivery_date ? formatDate(invoice.estimated_delivery_date) : 'TBD'],
+      ['Est. Delivery', invoice.estimated_delivery_date ? formatDate(invoice.estimated_delivery_date) : 'TBD'],
     ];
-    packageLines.forEach(([label, value]) => {
+    pkgRows.forEach(([label, value]) => {
       doc.setTextColor(100, 116, 139);
-      doc.text(label + ':', 14, y);
+      doc.text(label, 14, y);
       doc.setTextColor(15, 23, 42);
       doc.setFont('helvetica', 'bold');
-      doc.text(value, 70, y);
+      doc.text(value, 80, y);
       doc.setFont('helvetica', 'normal');
       y += 5;
     });
 
     y += 4;
     doc.line(14, y, pageWidth - 14, y);
-    y += 8;
+    y += 10;
 
     // Cost
-    doc.setFontSize(11);
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(15, 23, 42);
     doc.text('Total Cost:', 14, y);
     doc.text(`${invoice.currency} ${invoice.total_cost.toFixed(2)}`, pageWidth - 14, y, { align: 'right' });
-    y += 10;
+    y += 8;
 
-    // Notes
     if (invoice.notes) {
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       doc.setTextColor(71, 85, 105);
       doc.text('Notes:', 14, y);
       doc.text(doc.splitTextToSize(invoice.notes, pageWidth - 28), 14, y + 5);
@@ -245,12 +255,7 @@ export default function InvoiceDetail() {
   const handleShare = async () => {
     const url = `${window.location.origin}/track?code=${invoice?.tracking_code}`;
     if (navigator.share) {
-      try {
-        await navigator.share({ title: 'Track your package', url });
-      } catch {
-        setEmailStatus('Sharing was cancelled.');
-        setTimeout(() => setEmailStatus(''), 3000);
-      }
+      try { await navigator.share({ title: 'Track your package', url }); } catch {}
     } else {
       await navigator.clipboard.writeText(url);
       setEmailStatus('Tracking link copied to clipboard!');
@@ -266,18 +271,25 @@ export default function InvoiceDetail() {
     }
     setEmailSending(true);
     setEmailStatus('');
-
     const subject = `Your Delivery Invoice - ${invoice.tracking_code}`;
     const body = `Dear ${invoice.receiver_name},\n\nYour package has been registered with ${settings?.company_name}.\n\nTracking Code: ${invoice.tracking_code}\nStatus: ${STATUS_LABELS[invoice.status]}\n\nTrack your package here: ${window.location.origin}/track?code=${invoice.tracking_code}\n\nPackage Details:\n- Description: ${invoice.package_description}\n- Shipping Method: ${invoice.shipping_method}\n- Estimated Delivery: ${invoice.estimated_delivery_date ? formatDate(invoice.estimated_delivery_date) : 'TBD'}\n\nThank you for choosing ${settings?.company_name}.\n\n${settings?.phone}\n${settings?.email}`;
-
     window.location.href = `mailto:${invoice.receiver_email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     setEmailSending(false);
     setEmailStatus('Email client opened.');
     setTimeout(() => setEmailStatus(''), 3000);
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleDeleteHistory = async (historyId: string) => {
+    if (!invoice || !confirm('Delete this status update from the history?')) return;
+    await supabase.from('invoice_status_history').delete().eq('id', historyId);
+    await refreshHistory();
+  };
+
+  const handleEditHistory = (item: InvoiceStatusHistory) => {
+    setEditingHistory(item);
+    setEditHistoryStatus(item.status);
+    setEditHistoryNote(item.notes || '');
+    setEditHistoryLocation(item.location || '');
   };
 
   const handleSaveHistory = async () => {
@@ -288,12 +300,7 @@ export default function InvoiceDetail() {
       notes: editHistoryNote || null,
       location: editHistoryLocation || null,
     }).eq('id', editingHistory.id);
-    const { data: histData } = await supabase
-      .from('invoice_status_history')
-      .select('*')
-      .eq('invoice_id', id)
-      .order('created_at', { ascending: true });
-    setHistory((histData as InvoiceStatusHistory[]) || []);
+    await refreshHistory();
     setEditingHistory(null);
     setSavingHistory(false);
   };
@@ -310,8 +317,11 @@ export default function InvoiceDetail() {
     return <div className="text-center py-20 text-slate-400">Invoice not found.</div>;
   }
 
+  const primaryColor = settings?.primary_color || '#0ea5e9';
+
   return (
     <div>
+      {/* Header row */}
       <div className="flex items-center gap-3 mb-6 flex-wrap">
         <button onClick={() => navigate('/admin/invoices')} className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg">
           <ArrowLeft className="w-5 h-5" />
@@ -335,7 +345,7 @@ export default function InvoiceDetail() {
         <button onClick={handleEmail} disabled={emailSending} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold rounded-lg flex items-center gap-2 transition-colors">
           {emailSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Email Receiver
         </button>
-        <button onClick={handlePrint} className="px-4 py-2 border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-lg flex items-center gap-2 transition-colors">
+        <button onClick={() => window.print()} className="px-4 py-2 border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-lg flex items-center gap-2 transition-colors">
           <Printer className="w-4 h-4" /> Print
         </button>
         <button onClick={() => navigate(`/admin/invoices/${invoice.id}/edit`)} className="px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white text-sm font-semibold rounded-lg flex items-center gap-2 transition-colors">
@@ -351,82 +361,152 @@ export default function InvoiceDetail() {
       )}
 
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Invoice Card */}
-        <div ref={invoiceRef} className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="bg-gradient-to-r from-sky-500 to-sky-600 text-white p-6">
-            <div className="flex items-start justify-between flex-wrap gap-4">
+        {/* Invoice Card — Redesigned */}
+        <div ref={invoiceRef} className="lg:col-span-2 space-y-6">
+          {/* Company Header */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <div className="flex items-start justify-between gap-6">
+              <div className="flex items-center gap-4 min-w-0">
+                {settings?.logo_url ? (
+                  <img src={settings.logo_url} alt={settings.company_name} className="h-14 w-auto rounded-lg shrink-0" />
+                ) : (
+                  <div className="text-white p-3 rounded-xl shrink-0" style={{ backgroundColor: primaryColor }}>
+                    <Package className="w-7 h-7" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="text-lg font-bold text-slate-900 truncate">{settings?.company_name}</div>
+                  {settings?.tagline && <div className="text-sm text-slate-500 truncate">{settings.tagline}</div>}
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="text-xs text-slate-400 uppercase tracking-wide">Invoice Date</div>
+                <div className="text-sm font-medium text-slate-700 flex items-center gap-1 justify-end mt-0.5">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                  {formatDate(invoice.created_at)}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tracking + QR */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <div className="text-lg font-bold">{settings?.company_name}</div>
-                <div className="text-sm text-sky-100">{settings?.tagline}</div>
-                <div className="text-xs text-sky-200 mt-2">{settings?.phone}</div>
+                <div className="text-xs text-slate-400 uppercase tracking-wide mb-1">Tracking Code</div>
+                <div className="text-2xl font-bold tracking-code text-slate-900">{invoice.tracking_code}</div>
+                <div className="mt-2">
+                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border ${STATUS_COLORS[invoice.status]}`}>
+                    {STATUS_LABELS[invoice.status]}
+                  </span>
+                </div>
               </div>
               {qrDataUrl && (
-                <div className="bg-white p-2 rounded-lg">
-                  <img src={qrDataUrl} alt="QR Code" className="w-24 h-24" />
+                <div className="bg-slate-50 p-2 rounded-lg shrink-0">
+                  <img src={qrDataUrl} alt="QR Code" className="w-20 h-20" />
                 </div>
               )}
             </div>
           </div>
 
-          <div className="p-6">
-            <div className="bg-slate-50 rounded-lg p-4 mb-6 flex items-center justify-between">
-              <div>
-                <div className="text-xs text-slate-500 uppercase tracking-wide">Tracking Code</div>
-                <div className="text-lg font-bold font-mono text-slate-900">{invoice.tracking_code}</div>
-              </div>
-              <div className="text-right">
-                <div className="text-xs text-slate-500 uppercase tracking-wide">Date</div>
-                <div className="text-sm font-medium text-slate-700">{formatDate(invoice.created_at)}</div>
-              </div>
-            </div>
-
-            <div className="grid sm:grid-cols-2 gap-4 mb-6">
-              <div className="border border-slate-200 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <User className="w-4 h-4 text-sky-500" />
-                  <span className="font-semibold text-slate-900 text-sm">FROM (SENDER)</span>
+          {/* Sender & Receiver */}
+          <div className="grid sm:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="bg-sky-50 text-sky-600 p-2 rounded-lg">
+                  <User className="w-4 h-4" />
                 </div>
-                <div className="space-y-1 text-sm text-slate-600">
-                  <div className="font-medium text-slate-900">{invoice.sender_name}</div>
-                  <div>{invoice.sender_phone}</div>
-                  {invoice.sender_email && <div>{invoice.sender_email}</div>}
-                  <div>{invoice.sender_address}</div>
-                </div>
+                <span className="font-bold text-slate-900 text-sm uppercase tracking-wide">Sender</span>
               </div>
-              <div className="border border-slate-200 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <MapPin className="w-4 h-4 text-amber-500" />
-                  <span className="font-semibold text-slate-900 text-sm">TO (RECEIVER)</span>
+              <div className="space-y-1.5 text-sm">
+                <div className="font-semibold text-slate-900">{invoice.sender_name}</div>
+                <div className="flex items-center gap-2 text-slate-600">
+                  <Phone className="w-3.5 h-3.5 text-slate-400" />
+                  {invoice.sender_phone}
                 </div>
-                <div className="space-y-1 text-sm text-slate-600">
-                  <div className="font-medium text-slate-900">{invoice.receiver_name}</div>
-                  <div>{invoice.receiver_phone}</div>
-                  {invoice.receiver_email && <div>{invoice.receiver_email}</div>}
-                  <div>{invoice.receiver_address}</div>
+                {invoice.sender_email && (
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <Mail className="w-3.5 h-3.5 text-slate-400" />
+                    {invoice.sender_email}
+                  </div>
+                )}
+                <div className="flex items-start gap-2 text-slate-600 pt-1">
+                  <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
+                  {invoice.sender_address}
                 </div>
               </div>
             </div>
-
-            <div className="border border-slate-200 rounded-lg p-4 mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <Package className="w-4 h-4 text-emerald-500" />
-                <span className="font-semibold text-slate-900 text-sm">PACKAGE DETAILS</span>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="bg-amber-50 text-amber-600 p-2 rounded-lg">
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <span className="font-bold text-slate-900 text-sm uppercase tracking-wide">Receiver</span>
               </div>
-              <div className="grid sm:grid-cols-2 gap-3 text-sm">
-                <div><span className="text-slate-500">Description:</span> <span className="font-medium text-slate-900">{invoice.package_description}</span></div>
-                <div><span className="text-slate-500">Type:</span> <span className="font-medium text-slate-900">{invoice.package_type || 'N/A'}</span></div>
-                <div><span className="text-slate-500">Weight:</span> <span className="font-medium text-slate-900">{invoice.package_weight ? `${invoice.package_weight} kg` : 'N/A'}</span></div>
-                <div><span className="text-slate-500">Dimensions:</span> <span className="font-medium text-slate-900">{invoice.package_dimensions || 'N/A'}</span></div>
-                <div><span className="text-slate-500">Shipping Method:</span> <span className="font-medium text-slate-900">{invoice.shipping_method}</span></div>
-                <div><span className="text-slate-500">Est. Delivery:</span> <span className="font-medium text-slate-900">{invoice.estimated_delivery_date ? formatDate(invoice.estimated_delivery_date) : 'TBD'}</span></div>
+              <div className="space-y-1.5 text-sm">
+                <div className="font-semibold text-slate-900">{invoice.receiver_name}</div>
+                <div className="flex items-center gap-2 text-slate-600">
+                  <Phone className="w-3.5 h-3.5 text-slate-400" />
+                  {invoice.receiver_phone}
+                </div>
+                {invoice.receiver_email && (
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <Mail className="w-3.5 h-3.5 text-slate-400" />
+                    {invoice.receiver_email}
+                  </div>
+                )}
+                <div className="flex items-start gap-2 text-slate-600 pt-1">
+                  <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
+                  {invoice.receiver_address}
+                </div>
               </div>
             </div>
+          </div>
 
-            <div className="flex items-center justify-between border-t border-slate-200 pt-4">
-              <span className="font-semibold text-slate-900">Total Cost</span>
-              <span className="text-2xl font-bold text-sky-600">{invoice.currency} {invoice.total_cost.toFixed(2)}</span>
+          {/* Package Details */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="bg-emerald-50 text-emerald-600 p-2 rounded-lg">
+                <Package className="w-4 h-4" />
+              </div>
+              <span className="font-bold text-slate-900 text-sm uppercase tracking-wide">Package Details</span>
             </div>
+            <div className="grid sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+              <div className="flex justify-between border-b border-slate-100 pb-2">
+                <span className="text-slate-500">Description</span>
+                <span className="font-medium text-slate-900 text-right">{invoice.package_description}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-100 pb-2">
+                <span className="text-slate-500">Type</span>
+                <span className="font-medium text-slate-900 text-right">{invoice.package_type || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-100 pb-2">
+                <span className="text-slate-500">Weight</span>
+                <span className="font-medium text-slate-900 text-right">{invoice.package_weight ? `${invoice.package_weight} kg` : 'N/A'}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-100 pb-2">
+                <span className="text-slate-500">Dimensions</span>
+                <span className="font-medium text-slate-900 text-right">{invoice.package_dimensions || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-100 pb-2">
+                <span className="text-slate-500">Shipping Method</span>
+                <span className="font-medium text-slate-900 text-right">{invoice.shipping_method}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-100 pb-2">
+                <span className="text-slate-500">Est. Delivery</span>
+                <span className="font-medium text-slate-900 text-right">{invoice.estimated_delivery_date ? formatDate(invoice.estimated_delivery_date) : 'TBD'}</span>
+              </div>
+            </div>
+          </div>
 
+          {/* Cost & Notes */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+              <span className="font-bold text-slate-900 text-lg">Total Cost</span>
+              <span className="text-2xl font-bold" style={{ color: primaryColor }}>
+                {invoice.currency} {invoice.total_cost.toFixed(2)}
+              </span>
+            </div>
             {invoice.notes && (
               <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
                 <strong>Notes:</strong> {invoice.notes}
@@ -448,7 +528,7 @@ export default function InvoiceDetail() {
                 const Icon = STATUS_ICONS[item.status] || Clock;
                 const isLast = idx === history.length - 1;
                 return (
-                  <div key={item.id} className="flex gap-3">
+                  <div key={item.id} className="flex gap-3 group">
                     <div className="flex flex-col items-center">
                       <div className={`p-1.5 rounded-full ${STATUS_COLORS[item.status].replace('border', 'border-0')}`}>
                         <Icon className={`w-3 h-3 ${item.status === 'processing' ? 'animate-spin' : ''}`} />
@@ -456,8 +536,18 @@ export default function InvoiceDetail() {
                       {!isLast && <div className="w-0.5 flex-1 bg-slate-200 my-1" />}
                     </div>
                     <div className={`flex-1 ${isLast ? '' : 'pb-4'}`}>
-                      <div className="font-semibold text-sm text-slate-900">{STATUS_LABELS[item.status]}</div>
-                      <div className="text-xs text-slate-500">{new Date(item.created_at).toLocaleString()}</div>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-sm text-slate-900">{STATUS_LABELS[item.status]}</span>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => handleEditHistory(item)} className="p-1 text-slate-400 hover:text-sky-600">
+                            <Edit3 className="w-3 h-3" />
+                          </button>
+                          <button onClick={() => handleDeleteHistory(item.id)} className="p-1 text-slate-400 hover:text-rose-600">
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="text-xs text-slate-500">{formatDateTime(item.created_at)}</div>
                       {item.location && <div className="text-xs text-slate-600 mt-1 flex items-center gap-1"><MapPin className="w-3 h-3" />{item.location}</div>}
                       {item.notes && <div className="text-xs text-slate-600 mt-1">{item.notes}</div>}
                     </div>
@@ -476,7 +566,6 @@ export default function InvoiceDetail() {
             <Plus className="w-4 h-4" /> Add Status Update
           </button>
 
-          {/* Status Quick Update */}
           <div className="mt-4 pt-4 border-t border-slate-100">
             <div className="text-xs text-slate-500 mb-2">Quick update:</div>
             <div className="flex flex-wrap gap-2">
@@ -493,8 +582,7 @@ export default function InvoiceDetail() {
                     });
                     await supabase.from('invoices').update({ status: s, updated_at: new Date().toISOString() }).eq('id', invoice.id);
                     setInvoice({ ...invoice, status: s });
-                    const { data: histData } = await supabase.from('invoice_status_history').select('*').eq('invoice_id', id).order('created_at', { ascending: true });
-                    setHistory((histData as InvoiceStatusHistory[]) || []);
+                    await refreshHistory();
                     setSavingStatus(false);
                   }}
                   disabled={savingStatus || s === invoice.status}
@@ -531,13 +619,14 @@ export default function InvoiceDetail() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Location</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Location Address</label>
                 <input
                   value={statusLocation}
                   onChange={(e) => setStatusLocation(e.target.value)}
-                  placeholder="e.g. New York Sorting Center"
+                  placeholder="e.g. 123 Main St, New York, NY 10001"
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
                 />
+                <p className="text-xs text-slate-400 mt-1">Enter the actual location address of the package.</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
@@ -594,11 +683,11 @@ export default function InvoiceDetail() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Location</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Location Address</label>
                 <input
                   value={editHistoryLocation}
                   onChange={(e) => setEditHistoryLocation(e.target.value)}
-                  placeholder="e.g. New York Sorting Center"
+                  placeholder="e.g. 123 Main St, New York, NY 10001"
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
                 />
               </div>

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { isSupabaseConfigured, supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { SiteSettings, NavLink, FooterLink } from '@/types';
 
 const GOOGLE_FONTS: Record<string, string> = {
@@ -50,46 +50,25 @@ interface SiteContextValue {
   refresh: () => Promise<void>;
 }
 
-const DEFAULT_NAV_LINKS: NavLink[] = [
-  { id: 'home', label: 'Home', url: '/', link_order: 1, is_active: true, is_external: false, created_at: '' },
-  { id: 'services', label: 'Services', url: '/#services', link_order: 2, is_active: true, is_external: false, created_at: '' },
-  { id: 'about', label: 'About Us', url: '/#about', link_order: 3, is_active: true, is_external: false, created_at: '' },
-  { id: 'contact', label: 'Contact', url: '/#contact', link_order: 4, is_active: true, is_external: false, created_at: '' },
-];
-
 const SiteContext = createContext<SiteContextValue | undefined>(undefined);
 
 export function SiteProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
-  const [navLinks, setNavLinks] = useState<NavLink[]>(DEFAULT_NAV_LINKS);
+  const [navLinks, setNavLinks] = useState<NavLink[]>([]);
   const [footerLinks, setFooterLinks] = useState<FooterLink[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    if (!isSupabaseConfigured) {
-      setLoading(false);
-      return;
-    }
+    const [settingsRes, navRes, footerRes] = await Promise.all([
+      supabase.from('site_settings').select('*').limit(1).maybeSingle(),
+      supabase.from('nav_links').select('*').order('link_order', { ascending: true }),
+      supabase.from('footer_links').select('*').order('link_order', { ascending: true }),
+    ]);
 
-    try {
-      const [settingsRes, navRes, footerRes] = await Promise.all([
-        supabase.from('site_settings').select('*').limit(1).maybeSingle(),
-        supabase.from('nav_links').select('*').order('link_order', { ascending: true }),
-        supabase.from('footer_links').select('*').order('link_order', { ascending: true }),
-      ]);
-
-      if (settingsRes.data) setSettings(settingsRes.data as SiteSettings);
-      if (navRes.data && navRes.data.length > 0) {
-        setNavLinks(navRes.data as NavLink[]);
-      } else {
-        setNavLinks(DEFAULT_NAV_LINKS);
-      }
-      if (footerRes.data) setFooterLinks(footerRes.data as FooterLink[]);
-    } catch (error) {
-      console.warn('[v0] Site content is unavailable; using built-in defaults.', error);
-    } finally {
-      setLoading(false);
-    }
+    if (settingsRes.data) setSettings(settingsRes.data as SiteSettings);
+    if (navRes.data) setNavLinks(navRes.data as NavLink[]);
+    if (footerRes.data) setFooterLinks(footerRes.data as FooterLink[]);
+    setLoading(false);
   }, []);
 
   useEffect(() => {

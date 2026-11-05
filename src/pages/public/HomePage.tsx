@@ -4,19 +4,41 @@ import {
   Truck, Globe, Shield, Package, MapPin, Headphones, Search,
   ArrowRight, CheckCircle2, Star, Clock, Zap, Send, Loader2, MessageSquare,
   Phone, Mail,
-  type LucideIcon,
 } from 'lucide-react';
 import { useSite } from '@/context/SiteContext';
 import { supabase } from '@/lib/supabase';
+import { ServiceItem, StatItem, WhyChooseItem } from '@/types';
 
-const ICON_MAP: Record<string, LucideIcon> = {
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
   Truck, Globe, Shield, Package, MapPin, Headphones, Clock, Star, Zap, Send, CheckCircle2, MessageSquare,
 };
+
+const DEFAULT_STATS: StatItem[] = [
+  { label: 'Packages Delivered', value: '500K+' },
+  { label: 'Countries Served', value: '200+' },
+  { label: 'On-time Rate', value: '99.8%' },
+  { label: 'Customer Rating', value: '4.9/5' },
+];
+
+const DEFAULT_SERVICES: ServiceItem[] = [
+  { icon: 'Truck', title: 'Express Delivery', description: 'Same-day and next-day delivery across major cities with real-time tracking.' },
+  { icon: 'Globe', title: 'International Freight', description: 'Reliable cross-border shipping by air and sea with full customs support.' },
+  { icon: 'Package', title: 'Business Logistics', description: 'Warehousing, bulk shipments and scheduled pickups tailored to your business.' },
+];
+
+const DEFAULT_WHY_CHOOSE: WhyChooseItem[] = [
+  { icon: 'Clock', title: 'Lightning Fast', description: 'Express delivery options with same-day and next-day service in major cities.' },
+  { icon: 'Shield', title: 'Secure & Insured', description: 'Every shipment is insured and handled with tamper-proof packaging.' },
+  { icon: 'Star', title: 'Trusted by Thousands', description: 'Over 500,000 successful deliveries with a 99.8% on-time rate.' },
+];
 
 export default function HomePage() {
   const { settings } = useSite();
   const [trackInput, setTrackInput] = useState('');
   const navigate = useNavigate();
+  const stats = settings?.stats_json?.length ? settings.stats_json : DEFAULT_STATS;
+  const services = settings?.services_json?.length ? settings.services_json : DEFAULT_SERVICES;
+  const whyChoose = settings?.why_choose_json?.length ? settings.why_choose_json : DEFAULT_WHY_CHOOSE;
 
   const [contactForm, setContactForm] = useState({ name: '', email: '', phone: '', message: '' });
   const [contactSending, setContactSending] = useState(false);
@@ -102,13 +124,14 @@ export default function HomePage() {
               </form>
             </div>
 
-            <div className="hidden lg:block">
+            <div>
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-tr from-sky-500/20 to-amber-500/20 rounded-3xl blur-2xl" />
                 <img
                   src={settings?.hero_image_url || 'https://images.pexels.com/photos/4364131/pexels-photo-4364131.jpeg?auto=compress&cs=tinysrgb&w=900'}
                   alt="Courier delivery"
-                  className="relative rounded-3xl shadow-2xl"
+                  className="relative w-full h-[280px] sm:h-[360px] lg:h-[480px] object-cover rounded-3xl shadow-2xl"
+                  onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/4364131/pexels-photo-4364131.jpeg?auto=compress&cs=tinysrgb&w=900'; }}
                 />
               </div>
             </div>
@@ -117,11 +140,10 @@ export default function HomePage() {
       </section>
 
       {/* Stats Section */}
-      {settings?.stats_json && settings.stats_json.length > 0 && (
-        <section className="bg-white py-12 border-b border-slate-100">
+      <section className="bg-white py-12 border-b border-slate-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-              {settings.stats_json.map((stat, i) => (
+              {stats.map((stat, i) => (
                 <div key={i} className="text-center">
                   <div className="text-3xl lg:text-4xl font-bold" style={{ color: 'var(--color-primary)' }}>{stat.value}</div>
                   <div className="text-sm text-slate-500 mt-1">{stat.label}</div>
@@ -129,12 +151,10 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-        </section>
-      )}
+      </section>
 
       {/* Services Section */}
-      {settings?.services_json && settings.services_json.length > 0 && (
-        <section id="services" className="py-20 bg-slate-50">
+      <section id="services" className="py-20 bg-slate-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">{settings?.services_title || 'Our Services'}</h2>
@@ -143,25 +163,42 @@ export default function HomePage() {
               </p>
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {settings.services_json.map((service, i) => {
+              {services.map((service, i) => {
                 const Icon = ICON_MAP[service.icon] || Package;
                 return (
                   <div
                     key={i}
-                    className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl border border-slate-100 transition-all duration-300 hover:-translate-y-1"
+                    className="group bg-white rounded-2xl shadow-sm hover:shadow-xl border border-slate-100 transition-all duration-300 hover:-translate-y-1 overflow-hidden"
                   >
-                    <div className="p-3 rounded-xl w-fit transition-colors duration-300" style={{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 8%, transparent)' }}>
-                      <Icon className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
+                    {service.image_url ? (
+                      <div className="relative h-44 overflow-hidden">
+                        <img
+                          src={service.image_url}
+                          alt={service.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                        <div className="absolute bottom-3 left-3 p-2 rounded-lg bg-white/90 backdrop-blur-sm">
+                          <Icon className="w-5 h-5" style={{ color: 'var(--color-primary)' }} />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-6 pb-0">
+                        <div className="p-3 rounded-xl w-fit transition-colors duration-300" style={{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 8%, transparent)' }}>
+                          <Icon className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
+                        </div>
+                      </div>
+                    )}
+                    <div className="p-6">
+                      <h3 className="text-xl font-bold text-slate-900 mb-2">{service.title}</h3>
+                      <p className="text-slate-500 text-sm leading-relaxed">{service.description}</p>
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 mt-4 mb-2">{service.title}</h3>
-                    <p className="text-slate-500 text-sm leading-relaxed">{service.description}</p>
                   </div>
                 );
               })}
             </div>
           </div>
         </section>
-      )}
 
       {/* About Section */}
       <section id="about" className="py-20 bg-white">
@@ -172,7 +209,7 @@ export default function HomePage() {
                 <img
                   src={settings?.about_image_url || 'https://images.pexels.com/photos/4364169/pexels-photo-4364169.jpeg?auto=compress&cs=tinysrgb&w=800'}
                   alt="About Express Courier"
-                  className="rounded-2xl shadow-xl"
+                  className="w-full h-[420px] object-cover rounded-2xl shadow-xl"
                 />
                 <div className="absolute -bottom-6 -right-6 text-white p-6 rounded-2xl shadow-lg hidden md:block" style={{ backgroundColor: 'var(--color-primary)' }}>
                   <div className="text-3xl font-bold">{settings?.about_badge_value || '99.8%'}</div>
@@ -201,8 +238,7 @@ export default function HomePage() {
       </section>
 
       {/* Why Choose Us */}
-      {settings?.why_choose_json && settings.why_choose_json.length > 0 && (
-        <section className="py-20 bg-slate-900 text-white">
+      <section className="py-20 bg-slate-900 text-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">{settings?.why_choose_title || 'Why Choose Us'}</h2>
@@ -211,7 +247,7 @@ export default function HomePage() {
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-8">
-              {settings.why_choose_json.map((item, i) => {
+              {whyChoose.map((item, i) => {
                 const Icon = ICON_MAP[item.icon] || Clock;
                 const colors = ['text-sky-400 bg-sky-500/20', 'text-amber-400 bg-amber-500/20', 'text-emerald-400 bg-emerald-500/20'];
                 return (
@@ -226,8 +262,7 @@ export default function HomePage() {
               })}
             </div>
           </div>
-        </section>
-      )}
+      </section>
 
       {/* Contact / CTA */}
       <section id="contact" className="py-20 bg-slate-50">
@@ -242,6 +277,15 @@ export default function HomePage() {
           <div className="grid lg:grid-cols-2 gap-8">
             {/* Contact info */}
             <div className="space-y-6">
+              {settings?.contact_image_url && (
+                <div className="rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+                  <img
+                    src={settings.contact_image_url}
+                    alt="Contact us"
+                    className="w-full h-56 object-cover"
+                  />
+                </div>
+              )}
               <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="p-2.5 rounded-lg" style={{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 8%, transparent)', color: 'var(--color-primary)' }}>

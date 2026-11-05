@@ -36,6 +36,17 @@ export default function TrackPage() {
     catch { return new Date(d).toLocaleString(); }
   };
 
+  const currentLocation = (() => {
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].location) return history[i].location;
+    }
+    return null;
+  })();
+
+  const mapSrc = currentLocation
+    ? `https://maps.google.com/maps?q=${encodeURIComponent(currentLocation)}&t=&z=13&ie=UTF8&iwloc=&output=embed`
+    : null;
+
   const doSearch = async (code: string) => {
     setLoading(true);
     setError('');
@@ -71,6 +82,7 @@ export default function TrackPage() {
       setInput(code);
       doSearch(code);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -78,12 +90,14 @@ export default function TrackPage() {
     if (input.trim()) doSearch(input);
   };
 
+  const primaryColor = settings?.primary_color || '#0ea5e9';
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-sky-100 rounded-2xl mb-4">
-            <MapPin className="w-8 h-8 text-sky-600" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ backgroundColor: `color-mix(in srgb, ${primaryColor} 12%, transparent)` }}>
+            <MapPin className="w-8 h-8" style={{ color: primaryColor }} />
           </div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Track Your Package</h1>
           <p className="text-slate-500">Enter your tracking number below to see real-time delivery status.</p>
@@ -120,11 +134,12 @@ export default function TrackPage() {
 
         {invoice && (
           <div className="space-y-6">
+            {/* Package summary */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
               <div className="flex items-start justify-between flex-wrap gap-4 mb-6">
                 <div>
                   <div className="text-sm text-slate-500 mb-1">Tracking Number</div>
-                  <div className="text-xl font-bold text-slate-900 font-mono">{invoice.tracking_code}</div>
+                  <div className="text-xl font-bold text-slate-900 tracking-code">{invoice.tracking_code}</div>
                 </div>
                 <span className={`px-4 py-2 rounded-full text-sm font-semibold border ${STATUS_COLORS[invoice.status]}`}>
                   {STATUS_LABELS[invoice.status]}
@@ -156,14 +171,39 @@ export default function TrackPage() {
                 <div>
                   <div className="text-slate-500">Estimated Delivery</div>
                   <div className="font-medium text-slate-800">
-                    {invoice.estimated_delivery_date
-                      ? formatDate(invoice.estimated_delivery_date)
-                      : 'TBD'}
+                    {invoice.estimated_delivery_date ? formatDate(invoice.estimated_delivery_date) : 'TBD'}
                   </div>
                 </div>
               </div>
             </div>
 
+            {/* Current Location + Map */}
+            {currentLocation && (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="bg-sky-50 text-sky-600 p-2 rounded-lg">
+                    <MapPin className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="font-bold text-slate-900">Current Location</h2>
+                    <p className="text-sm text-slate-500">{currentLocation}</p>
+                  </div>
+                </div>
+                <div className="rounded-xl overflow-hidden border border-slate-200">
+                  <iframe
+                    title="Package Location Map"
+                    src={mapSrc || ''}
+                    width="100%"
+                    height="320"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Delivery Timeline */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
               <h2 className="text-lg font-bold text-slate-900 mb-6">Delivery Timeline</h2>
               {history.length > 0 ? (
@@ -182,18 +222,14 @@ export default function TrackPage() {
                         <div className={`flex-1 ${isLast ? '' : 'pb-6'}`}>
                           <div className="flex items-center justify-between flex-wrap gap-2">
                             <span className="font-semibold text-slate-900">{STATUS_LABELS[item.status]}</span>
-                            <span className="text-xs text-slate-500">
-                              {formatDateTime(item.created_at)}
-                            </span>
+                            <span className="text-xs text-slate-500">{formatDateTime(item.created_at)}</span>
                           </div>
                           {item.location && (
                             <div className="flex items-center gap-1 text-sm text-slate-500 mt-1">
                               <MapPin className="w-3 h-3" /> {item.location}
                             </div>
                           )}
-                          {item.notes && (
-                            <p className="text-sm text-slate-600 mt-1">{item.notes}</p>
-                          )}
+                          {item.notes && <p className="text-sm text-slate-600 mt-1">{item.notes}</p>}
                         </div>
                       </div>
                     );
