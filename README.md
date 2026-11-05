@@ -31,6 +31,24 @@ A courier-services website and management dashboard built with React, TypeScript
 | Customer experience | Shipment lookup, service information, inquiry form |
 | Staff workflow | Invoice management, status tracking, settings, content management |
 
+## 🖼️ Brand and product visuals
+
+### Courier operations and global network
+
+![Express Courier Services facility, team, and global network](1790971388647.jpg)
+
+### Homepage experience
+
+![Express Courier Services homepage hero](1790971440069.jpg)
+
+### Core delivery services
+
+![Express Courier Services core delivery services](1790971491458.jpg)
+
+### Delivery fleet and last-mile solutions
+
+![Express Courier Services delivery fleet and vehicles](1790971557044.jpg)
+
 ## ✨ Features
 
 ### Public customer experience
@@ -245,17 +263,6 @@ The project is deployed at [express-courier-services.vercel.app](https://express
 - Review row-level security for invoices, status history, messages, and site administration data.
 - Enforce administrator authorization in database policies, not only in the UI.
 - Validate and sanitize dynamic page content before publishing HTML.
-
-## 🖼️ Optional README image assets
-
-The repository does not currently include these image files. If you add the corresponding assets, use these paths and add matching image references to the README:
-
-| Asset | Path |
-|:---|:---|
-| Brand mark | `docs/images/brand-mark.png` |
-| Courier network | `docs/images/courier-network.png` |
-| Homepage hero | `docs/images/homepage-hero.png` |
-| Core services | `docs/images/core-services.png` |
 
 ## 🤝 Contributing
 
