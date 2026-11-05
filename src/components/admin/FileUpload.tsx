@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, Loader2, X, ImageIcon } from 'lucide-react';
+import { Upload, Loader2, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface FileUploadProps {
@@ -31,23 +31,27 @@ export default function FileUpload({
     }
     setUploading(true);
 
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
-    const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
+      const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('media')
+        .upload(fileName, file, { upsert: true });
 
-    const { error: uploadError } = await supabase.storage
-      .from('media')
-      .upload(fileName, file, { upsert: true });
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        setError(`Could not upload file: ${uploadError.message}`);
+        return;
+      }
 
-    if (uploadError) {
-      setError('Could not upload file. Please try again.');
+      const { data: urlData } = supabase.storage.from('media').getPublicUrl(fileName);
+      onChange(urlData.publicUrl);
+    } catch (uploadError) {
       console.error('Upload error:', uploadError);
+      setError(uploadError instanceof Error ? uploadError.message : 'Could not upload file.');
+    } finally {
       setUploading(false);
-      return;
     }
-
-    const { data: urlData } = supabase.storage.from('media').getPublicUrl(fileName);
-    onChange(urlData.publicUrl);
-    setUploading(false);
   };
 
   const handleDrop = (e: React.DragEvent) => {
