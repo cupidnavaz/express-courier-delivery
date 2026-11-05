@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="docs/images/brand-mark.png" alt="Express Courier Services logo" width="180" />
-
 # Express Courier Services
 ### Modern delivery operations for time-critical shipping and customer visibility
 
@@ -11,7 +9,7 @@
 [![Vite](https://img.shields.io/badge/Vite-5-646cff?style=for-the-badge&logo=vite&logoColor=white)](https://vite.dev)
 [![Supabase](https://img.shields.io/badge/Supabase-Auth%20%26%20DB-3ecf8e?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
 
-A polished courier-services website and management dashboard built with React, TypeScript, Vite, Tailwind CSS, and Supabase. The app combines customer-facing delivery tracking with a protected admin workflow for invoice management, status updates, brand customization, and content control.
+A courier-services website and management dashboard built with React, TypeScript, Vite, Tailwind CSS, and Supabase. Customers can look up shipments and submit inquiries; authorized staff can manage invoices, shipment statuses, and site content.
 
 [Live demo](https://express-courier-services.vercel.app) · [Features](#-features) · [Dashboard KPIs](#-dashboard-kpis) · [Quick start](#-quick-start) · [Admin portal](#-admin-portal)
 
@@ -21,112 +19,57 @@ A polished courier-services website and management dashboard built with React, T
 
 ## 📊 Project overview
 
-<div align="center">
-
-| KPI | Details |
+| Category | Details |
 |:---|:---|
-| Application type | Courier brand marketing site + operational shipping dashboard |
-| Frontend | React + TypeScript + Vite |
+| Application | Courier marketing site and shipping dashboard |
+| Frontend | React, TypeScript, Vite |
 | Styling | Tailwind CSS |
 | Platform services | Supabase Auth, Postgres, Storage |
-| Deployment target | Vercel |
-| Customer experience | Shipment lookup, service info, inquiry form |
-| Staff workflow | Invoice CRUD, status tracking, settings, content management |
-
-</div>
-
-## 🖼️ Brand and product visuals
-
-> Place the provided design assets in `docs/images/` to match the sections below.
-
-### Brand mark
-
-<p align="center">
-  <img src="docs/images/brand-mark.png" alt="Express Courier Services brand mark" width="220" />
-</p>
-
-### Operations and network
-
-<p align="center">
-  <img src="docs/images/courier-network.png" alt="Express Courier Services global courier network and facility" width="100%" />
-</p>
-
-### Homepage experience
-
-<p align="center">
-  <img src="docs/images/homepage-hero.png" alt="Express Courier Services homepage hero and shipping overview" width="100%" />
-</p>
-
-### Service stack and delivery capabilities
-
-<p align="center">
-  <img src="docs/images/core-services.png" alt="Courier logistics services and delivery capabilities" width="100%" />
-</p>
-
----
+| Deployment | Vercel |
+| Customer experience | Shipment lookup, service information, inquiry form |
+| Staff workflow | Invoice management, status tracking, settings, content management |
 
 ## ✨ Features
 
 ### Public customer experience
 
-- Responsive landing page with hero, CTA, stats, and trust-building content
-- Search and tracking workflow for package lookup by tracking code
-- Service cards with icons, descriptions, and optional image assets
-- About section, company highlights, and configurable brand details
+- Responsive landing page with configurable hero, statistics, and calls to action
+- Shipment lookup by tracking code
+- Service cards, company information, and configurable brand details
 - Contact form that stores inbound messages in Supabase
-- Dynamic public pages driven by slug-based CMS entries
-- Fully configurable navigation and footer content
+- Dynamic public pages, navigation, and footer content
 - Theme settings for colors, font family, and timezone
 
 ### Operational fulfillment flow
 
-- Shipment lifecycle states: `processing`, `dispatched`, `in_transit`, `on_hold`, `delivered`
-- Invoice creation, detail view, edit, delete, and filtering by status
-- Real-time package timeline using invoice status-history records
-- Embedded location map for current shipment position
-- Recent invoice panel and operational KPI cards in the dashboard
+- Shipment statuses: `processing`, `dispatched`, `in_transit`, `on_hold`, and `delivered`
+- Invoice creation, viewing, editing, deletion, and status filtering
+- Chronological package timeline based on invoice status-history records
+- Embedded map when a shipment location is available
+- Dashboard KPI cards and a recent-invoices panel
 
 ### Admin controls
 
-- Protected admin routes with Supabase authentication
-- Dashboard overview with counts and recent invoice activity
-- Invoice management workspace for courier operations
-- Site settings editor for theme and business details
-- Content management for pages, navbar, footer, and message inbox
-
-### Business-ready capabilities
-
-- Multi-region shipping concept with global footprint messaging
-- Brand personalization to match courier-company identity
-- External-facing tracking experience that is easy to share
-- Structured data model for invoices, messages, and website settings
+- Admin routes protected by Supabase authentication
+- Invoice management, site settings, dynamic pages, navigation, footer, and message inbox
 
 ---
 
 ## 📈 Dashboard KPIs
 
-The app includes a live dashboard that aggregates counts from Supabase data. Here is the operational KPI structure:
+The dashboard requests invoice and message counts from Supabase when it loads. It displays the following metrics; these are count cards, not historical trend charts:
 
 | Metric | Description |
 |:---|:---|
-| Total invoices | Overall count of invoice records |
-| Processing | Current shipments in `processing` state |
-| In transit | Current shipments in `in_transit` state |
-| Delivered | Completed deliveries |
-| Delivery rate | `delivered / total * 100` |
-| Dispatched | Current shipments released to carriers |
-| Unread messages | Messages with status `received` |
+| Total invoices | Count of invoice records |
+| Processing | Invoices currently in `processing` status |
+| In transit | Invoices currently in `in_transit` status |
+| Delivered | Invoices currently in `delivered` status |
+| Delivery rate | `delivered / total invoices * 100` (0% when there are no invoices) |
+| Dispatched | Invoices currently in `dispatched` status |
+| Received messages | Messages whose status is `received`; this is not a separate unread/read count |
 
-```mermaid
-pie title Courier Operations Snapshot
-    "Delivered" : 62
-    "In Transit" : 18
-    "Processing" : 10
-    "On Hold" : 6
-    "Dispatched" : 4
-```
-
----
+The delivery rate is calculated from current invoice statuses, not from historical shipment events. The dashboard does not display a live status-distribution chart.
 
 ## 🔄 Shipment lifecycle
 
@@ -145,9 +88,7 @@ stateDiagram-v2
     delivered --> [*]
 ```
 
-This lifecycle is surfaced in the public tracking page and the admin invoice detail flow.
-
----
+This diagram describes the statuses and transitions represented in the application; it is not a guarantee that every shipment follows one fixed route.
 
 ## 🧱 Technology stack
 
@@ -156,10 +97,10 @@ This lifecycle is surfaced in the public tracking page and the admin invoice det
 | Frontend | React 18, TypeScript, React Router |
 | Build tooling | Vite 5 |
 | UI | Tailwind CSS 3 |
-| Data & auth | Supabase Postgres, Auth, Storage |
+| Data and authentication | Supabase Postgres, Auth, Storage |
 | Icons | Lucide React |
 | Document tooling | jsPDF, QR code generation |
-| Linting & typing | ESLint, TypeScript |
+| Linting and typing | ESLint, TypeScript |
 
 ---
 
@@ -167,11 +108,11 @@ This lifecycle is surfaced in the public tracking page and the admin invoice det
 
 ### Prerequisites
 
-- Node.js LTS
-- npm
-- Supabase project with migrations applied
+- Node.js LTS and npm
+- A Supabase project
+- Supabase CLI to apply database migrations
 
-### 1) Install dependencies
+### 1. Install dependencies
 
 ```bash
 git clone https://github.com/cupidnavaz/express-courier-delivery.git
@@ -179,7 +120,7 @@ cd express-courier-delivery
 npm install
 ```
 
-### 2) Configure environment variables
+### 2. Configure environment variables
 
 Create a `.env` file in the project root:
 
@@ -188,7 +129,11 @@ VITE_SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
 VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 ```
 
-### 3) Apply the database schema
+Use the browser-safe anon/public key only. Never put a service-role key in a `VITE_` variable.
+
+### 3. Apply the database schema
+
+With the Supabase CLI installed and authenticated:
 
 ```bash
 supabase login
@@ -196,71 +141,47 @@ supabase link --project-ref YOUR_PROJECT_ID
 supabase db push
 ```
 
-### 4) Run locally
+### 4. Run locally
 
 ```bash
 npm run dev
 ```
 
-The app runs on the Vite local dev port, typically `http://localhost:5173`.
+Vite prints the local URL in the terminal (typically `http://localhost:5173`).
 
 ---
 
 ## ⚙️ Configuration
 
-The client bootstrap lives in `src/lib/supabase.ts` and enforces required environment variables before the app initializes.
+The Supabase client is initialized in `src/lib/supabase.ts` and requires both environment variables below.
 
 | Variable | Required | Purpose |
 |:---|:---:|:---|
 | `VITE_SUPABASE_URL` | Yes | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | Yes | Public/anonymous key for browser access |
 
-Additional runtime site details are read from Supabase tables like `site_settings`, `nav_links`, `footer_links`, and `pages` to power the public marketing site.
-
----
+Site settings and content are loaded from Supabase tables, including `site_settings`, `nav_links`, `footer_links`, and `pages`.
 
 ## 🗄️ Database and storage
 
-Schema and configuration are defined in the `supabase/` folder, including migrations for:
+Database migrations are in `supabase/migrations/`. They define the invoice and shipment workflow, status history, site settings and content, navigation and footer links, inbound messages, and media storage configuration. Supabase project configuration is in `supabase/config.toml`.
 
-- invoice and shipment data
-- status-change history
-- site settings and theme data
-- navigation and footer content
-- contact messages
-- storage bucket configuration
-
-### Key migration folders
-
-```text
-supabase/
-├── config.toml
-├── functions/
-├── migrations/
-└── ...
-```
-
-> Note: Keep secrets out of the repository. Use Supabase secrets or deployment platform env vars for any function credentials.
-
----
+Keep secrets out of the repository. Configure any function credentials using Supabase secrets or deployment-platform environment variables.
 
 ## 🔐 Admin portal
 
-The app includes a protected admin experience with routes such as:
+Admin routes include:
 
 - `/admin/login`
 - `/admin`
-- `/admin/invoices`
-- `/admin/invoices/new`
+- `/admin/invoices` and `/admin/invoices/new`
 - `/admin/messages`
 - `/admin/settings`
 - `/admin/pages`
 - `/admin/navbar`
 - `/admin/footer`
 
-This area is protected by Supabase Auth session checks and should be treated as an authenticated operations layer.
-
----
+Admin access requires a Supabase Auth session. Configure authorized staff accounts through your Supabase project's access process, and enforce least-privilege access with database policies. Hiding or protecting UI routes alone is not a substitute for database authorization.
 
 ## 🗂️ Project structure
 
@@ -271,43 +192,34 @@ This area is protected by Supabase Auth session checks and should be treated as 
 │   │   ├── admin/
 │   │   └── public/
 │   ├── context/
-│   │   ├── AuthContext.tsx
-│   │   └── SiteContext.tsx
 │   ├── lib/
-│   │   └── supabase.ts
 │   ├── pages/
 │   │   ├── admin/
 │   │   └── public/
 │   ├── App.tsx
-│   ├── main.tsx
-│   └── index.css
+│   └── main.tsx
 ├── supabase/
 │   ├── config.toml
 │   ├── functions/
 │   └── migrations/
-├── docs/
-│   └── images/
 ├── package.json
 ├── vite.config.ts
 ├── tailwind.config.js
 ├── tsconfig.json
-├── index.html
 └── README.md
 ```
-
----
 
 ## 📋 Available scripts
 
 | Command | Purpose |
 |:---|:---|
-| `npm run dev` | Start Vite dev server |
-| `npm run build` | Production build |
-| `npm run preview` | Preview production build |
+| `npm run dev` | Start the Vite development server |
+| `npm run build` | Create the production build |
+| `npm run preview` | Preview the production build locally |
 | `npm run lint` | Run ESLint |
-| `npm run typecheck` | TypeScript validation |
+| `npm run typecheck` | Run the TypeScript check |
 
-Recommended verification before shipping:
+Before submitting a change, run:
 
 ```bash
 npm run lint
@@ -315,58 +227,46 @@ npm run typecheck
 npm run build
 ```
 
----
-
 ## 🚀 Deployment
 
-This project is prepared for Vercel deployment and is currently associated with:
+The project is deployed at [express-courier-services.vercel.app](https://express-courier-services.vercel.app). For a Vercel deployment:
 
-- [Express Courier Services live site](https://express-courier-services.vercel.app)
-
-Recommended deployment steps:
-
-1. Import the repository to Vercel.
-2. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` under environment variables.
-3. Verify Supabase migrations are applied to the correct project.
-4. Deploy and confirm home, tracking, contact, and admin flows work correctly.
-
----
+1. Import the repository into Vercel.
+2. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as environment variables.
+3. Apply the Supabase migrations to the intended project.
+4. Deploy and verify the homepage, tracking lookup, contact form, and authorized admin access.
 
 ## 🛡️ Security notes
 
-- Do not expose service-role keys in frontend env vars.
-- Use Supabase Row Level Security for sensitive tables.
-- Use admin accounts only for trusted staff access.
-- Validate dynamic content before publishing any HTML-based page content.
-- Protect all operational CRUD routes with proper authorization checks.
+- Vite client variables are bundled into the browser; expose only public/anon credentials.
+- Keep service-role keys and other secrets in server-side or Supabase secret configuration.
+- Review row-level security for invoices, status history, messages, and site administration data.
+- Enforce administrator authorization in database policies, not only in the UI.
+- Validate and sanitize dynamic page content before publishing HTML.
 
----
+## 🖼️ Optional README image assets
 
-## 📁 README image asset checklist
+The repository does not currently include these image files. If you add the corresponding assets, use these paths and add matching image references to the README:
 
-Use these exact local paths in the repository when adding the provided design images:
-
-| Design image | Target file |
+| Asset | Path |
 |:---|:---|
-| Main brand mark | `docs/images/brand-mark.png` |
-| Facility and route network | `docs/images/courier-network.png` |
-| Homepage hero image | `docs/images/homepage-hero.png` |
-| Service cards / delivery visuals | `docs/images/core-services.png` |
-
----
+| Brand mark | `docs/images/brand-mark.png` |
+| Courier network | `docs/images/courier-network.png` |
+| Homepage hero | `docs/images/homepage-hero.png` |
+| Core services | `docs/images/core-services.png` |
 
 ## 🤝 Contributing
 
-1. Fork the repo.
-2. Create a feature branch.
-3. Make your changes and verify with lint/typecheck/build.
-4. Open a pull request with a clear summary and deployment notes.
+1. Fork the repository and create a focused feature branch.
+2. Install dependencies with `npm install`.
+3. Make and test your change; run lint, typecheck, and build.
+4. Open a pull request describing the change and any migration or environment-variable updates.
 
 ---
 
 <div align="center">
 
-Built for fast delivery teams, transparent tracking, and customer confidence.
+Built for clearer delivery operations and a better shipping experience.
 
 [Back to top](#express-courier-services)
 
